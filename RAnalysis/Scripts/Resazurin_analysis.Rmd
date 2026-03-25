@@ -16,58 +16,81 @@ knitr::opts_knit$set(root.dir = "C:/Users/gurrs/Documents/6_Github_repositories/
 ```{r}
 library(readxl)
 library(stringr)
+library(pracma)
 ```
 
+```{r}
+
+metadata_counts <- read.csv("Data/metadata_larvae_counts.csv", sep=',')
+
+```
 
 ```{r}
 resaz_72hpf_filenames <- list.files("Data/20260320_72hpf/", pattern = "\\.xlsx$", full.names = TRUE)
 resaz_72hpf_filenames
+
+#  [1] "Data/20260320_72hpf/Resaz_plate1_high_T0_260320_131142.xlsx" "Data/20260320_72hpf/Resaz_plate1_high_T1_260320_1424.xlsx"  
+#  [3] "Data/20260320_72hpf/Resaz_plate1_high_T2_260320_1529.xlsx"   "Data/20260320_72hpf/Resaz_plate1_high_T3_260320_1640.xlsx"  
+#  [5] "Data/20260320_72hpf/Resaz_plate1_high_T4_260320_1747.xlsx"   "Data/20260320_72hpf/Resaz_plate1_low_T0_260320_1328.xlsx"   
+#  [7] "Data/20260320_72hpf/Resaz_plate1_low_T1_260320_1436.xlsx"    "Data/20260320_72hpf/Resaz_plate1_low_T2_260320_1542.xlsx"   
+#  [9] "Data/20260320_72hpf/Resaz_plate1_low_T3_260320_1649.xlsx"    "Data/20260320_72hpf/Resaz_plate1_low_T4_260320_1758.xlsx"   
+# [11] "Data/20260320_72hpf/Resaz_plate2_high_T0_260320_1316.xlsx"   "Data/20260320_72hpf/Resaz_plate2_high_T1_260320_1420.xlsx"  
+# [13] "Data/20260320_72hpf/Resaz_plate2_high_T2_260320_1532.xlsx"   "Data/20260320_72hpf/Resaz_plate2_high_T3_260320_1637.xlsx"  
+# [15] "Data/20260320_72hpf/Resaz_plate2_high_T4_260320_1743.xlsx"   "Data/20260320_72hpf/Resaz_plate2_low_T0_260320_1331.xlsx"   
+# [17] "Data/20260320_72hpf/Resaz_plate2_low_T1_260320_1433.xlsx"    "Data/20260320_72hpf/Resaz_plate2_low_T2_260320_1544.xlsx"   
+# [19] "Data/20260320_72hpf/Resaz_plate2_low_T3_260320_1653.xlsx"    "Data/20260320_72hpf/Resaz_plate2_low_T4_260320_1754.xlsx" 
+
+
 # Read each file into a named list
 xlsx_list <- setNames(
-  lapply(resaz_72hpf_filenames, read_excel),
-  str_remove(basename(resaz_72hpf_filenames), "\\.xlsx$")
-)
+                      lapply(resaz_72hpf_filenames, read_excel),
+                      str_remove(basename(resaz_72hpf_filenames), "\\.xlsx$")
+             )
 
+```
 
-df <- df[, -c(1:2)]   # drop first 2 columns if needed
-colnames(df) <- c("id", "date", "value")
-
+```{r}
 covert_to_df <- function (file_in) {
                           file_out <- as.data.frame(file_in[-c(1:26), -c(1,15)]) # drop first columns and first 26 rows
-                          colnames(file_out) <- c("Row", "col1", "col2", "col3", "col4", "col5", "col6",
-                                                       "col7", "col8", "col9", "col10", "col11", "col12")
+                          colnames(file_out) <- c("Plate_row", 1,2,3,4,5,6,7,8,9,10,11,12)
                           
                           file_out <- file_out %>%  
                               tidyr::pivot_longer(
-                                cols = -Row,
-                                names_to = "column_id",
+                                cols = -Plate_row,
+                                names_to = "Plate_col",
                                 values_to = "flourescence"
                               )
                           
                           return(file_out)
                         }
 
+```
+
+```{r}
 plate1_high_T0_260320 <- covert_to_df(xlsx_list$Resaz_plate1_high_T0_260320_131142) %>% dplyr::mutate(time = "T0", 
-                                                                                                      plate = "1", 
-                                                                                                      well = paste0(Row,substr(column_id,4,5)))
+                                                                                                      Plate = "1", 
+                                                                                                      Well = paste0(Plate_row,Plate_col))
+
 plate1_high_T1_260320 <- covert_to_df(xlsx_list$Resaz_plate1_high_T1_260320_1424) %>% dplyr::mutate(time = "T1", 
-                                                                                                    plate = "1", 
-                                                                                                    well = paste0(Row,substr(column_id,4,5)))
+                                                                                                    Plate = "1", 
+                                                                                                    Well = paste0(Plate_row,Plate_col))
+
 plate1_high_T2_260320 <- covert_to_df(xlsx_list$Resaz_plate1_high_T2_260320_1529) %>% dplyr::mutate(time = "T2", 
-                                                                                                    plate = "1", 
-                                                                                                    well = paste0(Row,substr(column_id,4,5)))
+                                                                                                    Plate = "1", 
+                                                                                                    Well = paste0(Plate_row,Plate_col))
+
 plate1_high_T3_260320 <- covert_to_df(xlsx_list$Resaz_plate1_high_T3_260320_1640) %>% dplyr::mutate(time = "T3", 
-                                                                                                    plate = "1", 
-                                                                                                    well = paste0(Row,substr(column_id,4,5)))
+                                                                                                    Plate = "1", 
+                                                                                                    Well = paste0(Plate_row,Plate_col))
+
 plate1_high_T4_260320 <- covert_to_df(xlsx_list$Resaz_plate1_high_T4_260320_1747) %>% dplyr::mutate(time = "T4", 
-                                                                                                    plate = "1", 
-                                                                                                    well = paste0(Row,substr(column_id,4,5)))
+                                                                                                    Plate = "1", 
+                                                                                                    Well = paste0(Plate_row,Plate_col))
+```
 
 
 
-
-
-
+```{r}
 plate2_high_T0_260320 <- covert_to_df(xlsx_list$Resaz_plate2_high_T0_260320_1316) %>% dplyr::mutate(time = "T0", 
                                                                                                       plate = "2", 
                                                                                                       well = paste0(Row,substr(column_id,4,5)))
@@ -79,55 +102,133 @@ plate2_high_T1_260320 <- covert_to_df(xlsx_list$Resaz_plate2_high_T1_260320_1420
 plate2_high_T2_260320 <- covert_to_df(xlsx_list$Resaz_plate2_high_T2_260320_1532) %>% dplyr::mutate(time = "T2", 
                                                                                                     plate = "2", 
                                                                                                     well = paste0(Row,substr(column_id,4,5)))
+
 plate2_high_T3_260320 <- covert_to_df(xlsx_list$Resaz_plate2_high_T3_260320_1637) %>% dplyr::mutate(time = "T3", 
                                                                                                     plate = "2", 
                                                                                                     well = paste0(Row,substr(column_id,4,5)))
+
 plate2_high_T4_260320 <- covert_to_df(xlsx_list$Resaz_plate2_high_T4_260320_1743) %>% dplyr::mutate(time = "T4", 
                                                                                                     plate = "2", 
                                                                                                     well = paste0(Row,substr(column_id,4,5)))
+```
+
+```{r}
+plate1_high_master <- rbind(plate1_high_T0_260320, plate1_high_T1_260320, plate1_high_T3_260320, plate1_high_T4_260320) %>% 
+                          dplyr::mutate(Date = 20260320,
+                                        Treatment = 'high_temperature',
+                                        PlateID = 'plate_1_high')
+
+merge(plate1_high_master,metadata_counts, by=c('Date','PlateID', 'Well'))
+
+plate1_high_master_merged <- dplyr::left_join(plate1_high_master,metadata_counts, by=c('Date','PlateID', 'Well', 'Plate_row'))
 
 
+plate1_high_master_merged
+```
 
-plate1_high_master <- rbind(plate1_high_T0_260320, plate1_high_T1_260320, plate1_high_T3_260320, plate1_high_T4_260320)
+```{r auc testing}
+
+test <- plate1_high_master_merged %>% 
+              dplyr::filter(Plate_col.x %in% 1 &  Plate_row != 'H') %>% 
+              dplyr::filter(Count != 0) %>% 
+              dplyr::mutate(flourescence_cor = flourescence/Count)
+
+
+test_flourescence_summ  <- Rmisc::summarySE(
+                                data = test,
+                                measurevar = "flourescence_cor",
+                                groupvars = c("time", "Well")
+                             )
+
+test_count_summ  <- Rmisc::summarySE(
+                                data = test,
+                                measurevar = "Count",
+                                groupvars = "time"
+                             )
+
+
+test_B <- test %>% dplyr::filter(Plate_row == 'B') 
+test_B_auc <- pracma::trapz(
+                        as.numeric(substr(test_B$time,2,2)), 
+                        test_B$flourescence)
+
+test_D <- test %>% dplyr::filter(Plate_row == 'D') 
+test_D_auc <- pracma::trapz(
+                        as.numeric(substr(test_D$time,2,2)), 
+                        test_D$flourescence)
+
+test_E <- test %>% dplyr::filter(Plate_row == 'E') 
+test_E_auc <- pracma::trapz(
+                        as.numeric(substr(test_E$time,2,2)), 
+                        test_E$flourescence)
+
+test_F <- test %>% dplyr::filter(Plate_row == 'F') 
+test_F_auc <- pracma::trapz(
+                        as.numeric(substr(test_F$time,2,2)), 
+                        test_F$flourescence)
+
+
+x <- c(test_B_auc, test_D_auc, test_E_auc,test_F_auc)
+y <- c(59,9,51,32)
+
+df <- data.frame(x,y)
+
+ggplot(df,
+       aes(x=y, y=x)) +
+  geom_point() + 
+  geom_line()
+
+df <- df[order(df$time), ]
+auc <- pracma::trapz(
+  as.numeric(substr(test_flourescence_summ$time,2,2)), 
+  test_flourescence_summ$flourescence_cor)
+
+```
+
+
 plate2_high_master <- rbind(plate2_high_T0_260320, plate2_high_T1_260320, plate2_high_T3_260320, plate2_high_T4_260320)
 
-high_master       <- rbind(plate1_high_master, plate2_high_master) %>% 
-                        dplyr::mutate(EBV_cat = case_when(column_id %in% c("col1", "col2", "col3", "col4", "col5", "col6") ~ 'Low',
-                                                         column_id  %in% c("col7", "col8", "col9", "col10", "col11", "col12") ~ 'High'))
+high_master <- rbind(plate1_high_master, plate2_high_master) %>% 
+                     dplyr::mutate(EBV_cat = 
+                                     case_when(column_id %in% c("col1", "col2", "col3", "col4", "col5", "col6") ~ 'Low',
+                                               column_id  %in% c("col7", "col8", "col9", "col10", "col11", "col12") ~ 'High'))
                                       
 
-high_master_summ  <- Rmisc:: summarySE(
+
+```{r}
+high_master_summ  <- Rmisc::summarySE(
                                 data = (high_master %>% dplyr::filter(!Row %in% 'H')),
                                 measurevar = "flourescence",
                                 groupvars = c("column_id", "time" , "EBV_cat")
-)
+                             )
 
+```
 
-blank_master_summ  <- Rmisc:: summarySE(
+```{r}
+blank_master_summ  <- Rmisc::summarySE(
                                 data = (high_master %>% dplyr::filter(Row %in% 'H')),
                                 measurevar = "flourescence",
                                 groupvars = c("time")
-)
+                             )
+
+```
 
 
-# plate2_high_summ <- Rmisc:: summarySE(
-#                                 data = (plate2_high_master %>% dplyr::filter(!Row %in% 'H')),
-#                                 measurevar = "flourescence",
-#                                 groupvars = c("column_id", "time", "EBV_cat")
-# )
-
-
-ggplot(high_master_summ, 
-       aes(x = time, y = flourescence)) +
+```{r}
+library(ggplot2)
+ggplot(test, 
+       aes(x = time, y = flourescence, group=Well)) +
   geom_point(size = 3) +
   geom_line()+
-  geom_errorbar(aes(ymin = flourescence - se, ymax = flourescence + se),
+  geom_errorbar(aes(ymin = flourescence_cor - se, ymax = flourescence_cor + se),
                 width = 0.15) +
   geom_smooth(method = "loess", se = FALSE) +
-  theme_classic() +
-  facet_wrap(~column_id)
+  theme_classic() # +
+  # facet_wrap(~column_id)
 
+```
 
+```{r}
 ggplot(blank_master_summ, 
        aes(x = time, y = flourescence)) +
   geom_point(size = 3) +
@@ -136,6 +237,4 @@ ggplot(blank_master_summ,
                 width = 0.15) +
   geom_smooth(method = "loess", se = FALSE) +
 
-
-       
 ```
