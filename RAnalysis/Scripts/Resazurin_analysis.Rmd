@@ -17,6 +17,8 @@ knitr::opts_knit$set(root.dir = "C:/Users/gurrs/Documents/6_Github_repositories/
 library(readxl)
 library(stringr)
 library(pracma)
+library(ggplot2)
+library(ggpubr)
 ```
 
 ```{r}
@@ -194,7 +196,7 @@ for(i in 1:nrow(loop.df)){
                                               AUC = pracma::trapz(
                                                                   hours, 
                                                                   flourescence)) %>% 
-                                dplyr::select('Date', 'Treatment', 'PlateID', 'Age', 'time', 'hours',
+                                dplyr::select('Date', 'Treatment', 'PlateID', 'Age', 'time', 'Family', 'hours',
                                               'Well', 'Type', 'Count', 'AUC', 'delta_florescence')
                       
   output.cumulative.df <- rbind(output.cumulative.df, well.over.time)
@@ -230,30 +232,48 @@ for(i in 1:nrow(loop.df)){
                            
 }
 
-ggplot(
-      (output.cumulative.df %>% dplyr::filter(!(Type == 'Sample' & Count == 0))),
-       aes(hours, delta_florescence, group = Well)) +
-  # geom_point(aes(color = Type)) +
-  geom_smooth(aes(color = Type), method = "lm", se = FALSE)
+output.cor.df <- output.cor.df %>% dplyr::mutate(Family_EBV = 
+                                                   dplyr::case_when(Family > 50 ~ 'Low',
+                                                              Family < 20 ~ 'High'))
 
-ggplot(output.cor.df, 
-                aes(x = Count, y = AUC_cor)) +
+output.cumulative.df <- output.cumulative.df %>% dplyr::mutate(Family_EBV = 
+                                                   dplyr::case_when(Family > 50 ~ 'Low',
+                                                              Family < 20 ~ 'High'))
+
+
+delta_abs_figure <- ggplot(
+          (output.cumulative.df %>% dplyr::filter(!(Type == 'Sample' & Count == 0))),
+           aes(hours, delta_florescence, group = Well)) +
+      # geom_point(aes(color = Type)) +
+      geom_smooth(aes(color = Type), method = "lm", se = FALSE)
+delta_abs_figure
+
+
+AUC_cor_by_count <- ggplot(output.cor.df, 
+                aes(x = Count, y = AUC_cor,  color = Family_EBV)) +
   geom_point(fill = "steelblue")
-
+AUC_cor_by_count
 
 summary.df <- Rmisc::summarySE(
-                      data = (output.cor.df %>% 
-                                # dplyr::filter(!AUC_cor_norm > 200) %>% 
-                                dplyr::mutate(Family = substr(Well,2,3))),
+                      data = output.cor.df,
                       groupvars = 'Family',
-                      measurevar = 'AUC_cor')
+                      measurevar = 'AUC_cor_norm')
 
-library(ggplot2)
-ggplot(summary.df, 
-                aes(x = as.factor(as.numeric(Family)), y = AUC_cor)) +
+summary.df <- summary.df %>% dplyr::mutate(Family_EBV = 
+                                                   dplyr::case_when(Family > 50 ~ 'Low',
+                                                              Family < 20 ~ 'High'))
+
+AUC_cor_by_count_fam <- ggplot(summary.df, 
+                aes(x = as.factor(as.numeric(Family)), y = AUC_cor_norm, color = Family_EBV)) +
   geom_point(fill = "steelblue") +
-  geom_errorbar(aes(ymin = AUC_cor - se, ymax = AUC_cor + se), width = 0.2) +
+  geom_errorbar(aes(ymin = AUC_cor_norm - se, ymax = AUC_cor_norm + se), width = 0.2) +
   theme_classic()
+
+ggarrange(delta_abs_figure,
+          AUC_cor_by_count,
+          AUC_cor_by_count_fam,
+          nrow=3,
+          ncol=1)
 
 ```
 
