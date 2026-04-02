@@ -24,7 +24,9 @@ library(ggpubr)
 ```{r}
 
 metadata_counts <- read.csv("Data/metadata_larvae_counts.csv", sep=',')
+View(metadata_counts)
 
+plate_notes <- metadata_counts %>%  dplyr::select(c('PlateID','Well','Note','X')) %>% dplyr::rename(obs_volume = X)
 ```
 
 ```{r}
@@ -70,7 +72,7 @@ covert_to_df <- function (file_in) {
 
 ```{r}
 plate1_high_T0_260320 <- covert_to_df(xlsx_list$Resaz_plate1_high_T0_260320_131142) %>% dplyr::mutate(timepoint = "T0", 
-                                                                                                      Plate = "1", 
+                                                                                                      plate = "1", 
                                                                                                       Well = paste0(Plate_row,Plate_col),
                                                                                                     time= as.POSIXlt(
                                                                                                                     (strptime(1311, format = "%H%M")), 
@@ -78,7 +80,7 @@ plate1_high_T0_260320 <- covert_to_df(xlsx_list$Resaz_plate1_high_T0_260320_1311
                                                                                                  )
 
 plate1_high_T1_260320 <- covert_to_df(xlsx_list$Resaz_plate1_high_T1_260320_1424) %>% dplyr::mutate(timepoint = "T1", 
-                                                                                                    Plate = "1", 
+                                                                                                    plate = "1", 
                                                                                                     Well = paste0(Plate_row,Plate_col),
                                                                                                     time= as.POSIXlt(
                                                                                                                     (strptime(1424, format = "%H%M")), 
@@ -86,7 +88,7 @@ plate1_high_T1_260320 <- covert_to_df(xlsx_list$Resaz_plate1_high_T1_260320_1424
                                                                                                  )
 
 plate1_high_T2_260320 <- covert_to_df(xlsx_list$Resaz_plate1_high_T2_260320_1529) %>% dplyr::mutate(timepoint = "T2", 
-                                                                                                    Plate = "1", 
+                                                                                                    plate = "1", 
                                                                                                     Well = paste0(Plate_row,Plate_col),
                                                                                                     time= as.POSIXlt(
                                                                                                                     (strptime(1529, format = "%H%M")), 
@@ -94,7 +96,7 @@ plate1_high_T2_260320 <- covert_to_df(xlsx_list$Resaz_plate1_high_T2_260320_1529
                                                                                                  )
 
 plate1_high_T3_260320 <- covert_to_df(xlsx_list$Resaz_plate1_high_T3_260320_1640) %>% dplyr::mutate(timepoint = "T3", 
-                                                                                                    Plate = "1", 
+                                                                                                    plate = "1", 
                                                                                                     Well = paste0(Plate_row,Plate_col),
                                                                                                     time= as.POSIXlt(
                                                                                                                     (strptime(1640, format = "%H%M")), 
@@ -102,15 +104,13 @@ plate1_high_T3_260320 <- covert_to_df(xlsx_list$Resaz_plate1_high_T3_260320_1640
                                                                                                  )
 
 plate1_high_T4_260320 <- covert_to_df(xlsx_list$Resaz_plate1_high_T4_260320_1747) %>% dplyr::mutate(timepoint = "T4", 
-                                                                                                    Plate = "1", 
+                                                                                                    plate = "1", 
                                                                                                     Well = paste0(Plate_row,Plate_col),
                                                                                                     time= as.POSIXlt(
                                                                                                                     (strptime(1747, format = "%H%M")), 
                                                                                                                     format = "%H:%M")
                                                                                                  )
 ```
-
-
 
 ```{r}
 
@@ -158,14 +158,118 @@ plate2_high_T4_260320 <- covert_to_df(xlsx_list$Resaz_plate2_high_T4_260320_1743
 ```
 
 ```{r}
+
+plate1_low_T0_260320 <- covert_to_df(xlsx_list$Resaz_plate1_low_T0_260320_1328) %>% dplyr::mutate(timepoint = "T0", 
+                                                                                                      plate = "1", 
+                                                                                                    Well = paste0(Plate_row,Plate_col),
+                                                                                                    time= as.POSIXlt(
+                                                                                                                    (strptime(1328, format = "%H%M")), 
+                                                                                                                    format = "%H:%M")
+                                                                                                 )
+
+plate1_low_T1_260320 <- covert_to_df(xlsx_list$Resaz_plate1_low_T1_260320_1436) %>% dplyr::mutate(timepoint = "T1", 
+                                                                                                    plate = "1", 
+                                                                                                    Well = paste0(Plate_row,Plate_col),
+                                                                                                    time= as.POSIXlt(
+                                                                                                                    (strptime(1436, format = "%H%M")), 
+                                                                                                                    format = "%H:%M")
+                                                                                                 )
+
+plate1_low_T2_260320 <- covert_to_df(xlsx_list$Resaz_plate1_low_T2_260320_1542) %>% dplyr::mutate(timepoint = "T2", 
+                                                                                                    plate = "1", 
+                                                                                                    Well = paste0(Plate_row,Plate_col),
+                                                                                                    time= as.POSIXlt(
+                                                                                                                    (strptime(1542, format = "%H%M")), 
+                                                                                                                    format = "%H:%M")
+                                                                                                 )
+
+plate1_low_T3_260320 <- covert_to_df(xlsx_list$Resaz_plate1_low_T3_260320_1649) %>% dplyr::mutate(timepoint = "T3", 
+                                                                                                    plate = "1", 
+                                                                                                    Well = paste0(Plate_row,Plate_col),
+                                                                                                    time= as.POSIXlt(
+                                                                                                                    (strptime(1649, format = "%H%M")), 
+                                                                                                                    format = "%H:%M")
+                                                                                                 )
+
+plate1_low_T4_260320 <- covert_to_df(xlsx_list$Resaz_plate1_low_T4_260320_1758) %>% dplyr::mutate(timepoint = "T4", 
+                                                                                                    plate = "1", 
+                                                                                                    Well = paste0(Plate_row,Plate_col),
+                                                                                                    time= as.POSIXlt(
+                                                                                                                    (strptime(1758, format = "%H%M")), 
+                                                                                                                    format = "%H:%M")
+                                                                                                 )
+```
+
+```{r}
+
+plate2_low_T0_260320 <- covert_to_df(xlsx_list$Resaz_plate2_low_T0_260320_1331) %>% dplyr::mutate(timepoint = "T0", 
+                                                                                                      plate = "1", 
+                                                                                                    Well = paste0(Plate_row,Plate_col),
+                                                                                                    time= as.POSIXlt(
+                                                                                                                    (strptime(1331, format = "%H%M")), 
+                                                                                                                    format = "%H:%M")
+                                                                                                 )
+
+plate2_low_T1_260320 <- covert_to_df(xlsx_list$Resaz_plate2_low_T1_260320_1433) %>% dplyr::mutate(timepoint = "T1", 
+                                                                                                    plate = "1", 
+                                                                                                    Well = paste0(Plate_row,Plate_col),
+                                                                                                    time= as.POSIXlt(
+                                                                                                                    (strptime(1433, format = "%H%M")), 
+                                                                                                                    format = "%H:%M")
+                                                                                                 )
+
+plate2_low_T2_260320 <- covert_to_df(xlsx_list$Resaz_plate2_low_T2_260320_1544) %>% dplyr::mutate(timepoint = "T2", 
+                                                                                                    plate = "1", 
+                                                                                                    Well = paste0(Plate_row,Plate_col),
+                                                                                                    time= as.POSIXlt(
+                                                                                                                    (strptime(1544, format = "%H%M")), 
+                                                                                                                    format = "%H:%M")
+                                                                                                 )
+
+plate2_low_T3_260320 <- covert_to_df(xlsx_list$Resaz_plate2_low_T3_260320_1653) %>% dplyr::mutate(timepoint = "T3", 
+                                                                                                    plate = "1", 
+                                                                                                    Well = paste0(Plate_row,Plate_col),
+                                                                                                    time= as.POSIXlt(
+                                                                                                                    (strptime(1649, format = "%H%M")), 
+                                                                                                                    format = "%H:%M")
+                                                                                                 )
+
+plate2_low_T4_260320 <- covert_to_df(xlsx_list$Resaz_plate2_low_T4_260320_1754) %>% dplyr::mutate(timepoint = "T4", 
+                                                                                                    plate = "1", 
+                                                                                                    Well = paste0(Plate_row,Plate_col),
+                                                                                                    time= as.POSIXlt(
+                                                                                                                    (strptime(1754, format = "%H%M")), 
+                                                                                                                    format = "%H:%M")
+                                                                                                 )
+```
+
+```{r}
+
 plate1_high_master <- rbind(plate1_high_T0_260320, plate1_high_T1_260320, plate1_high_T3_260320, plate1_high_T4_260320) %>% 
                           dplyr::mutate(Date = 20260320,
                                         Treatment = 'high_temperature',
                                         PlateID = 'plate_1_high')
 
-merge(plate1_high_master,metadata_counts, by=c('Date','PlateID', 'Well'))
+plate2_high_master <- rbind(plate2_high_T0_260320, plate2_high_T1_260320, plate2_high_T3_260320, plate2_high_T4_260320) %>% 
+                          dplyr::mutate(Date = 20260320,
+                                        Treatment = 'high_temperature',
+                                        PlateID = 'plate_2_high')
 
-plate1_high_master_merged <- dplyr::left_join(plate1_high_master,metadata_counts, by=c('Date','PlateID', 'Well', 'Plate_row', 'Treatment'))
+plate1_low_master <- rbind(plate1_low_T0_260320, plate1_low_T1_260320, plate1_low_T3_260320, plate1_low_T4_260320) %>% 
+                          dplyr::mutate(Date = 20260320,
+                                        Treatment = 'low_temperature',
+                                        PlateID = 'plate_1_low')
+
+plate2_low_master <- rbind(plate2_low_T0_260320, plate2_low_T1_260320, plate2_low_T3_260320, plate2_low_T4_260320) %>% 
+                          dplyr::mutate(Date = 20260320,
+                                        Treatment = 'low_temperature',
+                                        PlateID = 'plate_2_low')
+
+all_data <- rbind(plate1_high_master, plate2_high_master, plate1_low_master, plate2_low_master)
+
+all_data_merged <- merge(all_data,metadata_counts, by=c('Date','PlateID', 'Well'))
+
+all_data_merged <- dplyr::left_join(all_data,metadata_counts, by=c('Date','PlateID', 'Well', 'Plate_row', 'Treatment'))
 
 
 plate1_high_master_merged
@@ -174,20 +278,23 @@ plate1_high_master_merged
 ```{r auc calc function}
 
 output.df <- data.frame()
-loop.df   <- data.frame(unique(plate1_high_master_merged$Well))
+loop.df_m   <- data.frame(unique(all_data_merged$PlateID))
+loop.df_i   <- data.frame(unique(all_data_merged$Well))
 
 
 # Call the cumulative dataframe that we will write to in the for loop below
-output.cumulative.df            <- data.frame() # start dataframe 
+output.cumulative.df <- data.frame() # start dataframe 
 output.df            <- data.frame() # start dataframe 
 output.cor.df        <- data.frame() # start dataframe 
 running.df           <- data.frame(matrix(nrow = 1, ncol = 9)) # create dataframe to save cumunalitively during for loop
 colnames(running.df) <- c('Date', 'Treatment', 'PlateID', 'Age', 'Well', 'Family', 'Type', 'Count', 'AUC') # names for columns in the for loop
 
-
-for(i in 1:nrow(loop.df)){
-  well.over.time       <- plate1_high_master_merged %>% 
-                                dplyr::filter(Well %in% loop.df[i,1]) %>% 
+for(m in 1:nrow(loop.df_m)){
+  plate_id      <- all_data_merged %>% 
+                                dplyr::filter(PlateID %in% loop.df_m[m,1])
+for(i in 1:nrow(loop.df_i)){
+  well.over.time       <- plate_id %>% 
+                                dplyr::filter(Well %in% loop.df_i[i,1]) %>% 
                                 dplyr::arrange(time) %>% 
                                 dplyr::mutate(hours = as.numeric(difftime(time, 
                                                                           time[1], 
@@ -230,33 +337,46 @@ for(i in 1:nrow(loop.df)){
                             na.omit()
                       
                            
+  }
 }
 
-output.cor.df <- output.cor.df %>% dplyr::mutate(Family_EBV = 
+output.cor.df_final <- merge(plate_notes, output.cor.df) %>% 
+                                                dplyr::mutate(Family_EBV = 
                                                    dplyr::case_when(Family > 50 ~ 'Low',
                                                               Family < 20 ~ 'High'))
 
-output.cumulative.df <- output.cumulative.df %>% dplyr::mutate(Family_EBV = 
+output.cumulative.df <- merge(plate_notes, output.cumulative.df) %>% dplyr::mutate(Family_EBV = 
                                                    dplyr::case_when(Family > 50 ~ 'Low',
                                                               Family < 20 ~ 'High'))
 
+
+
+output.cor.df_final_omit <- output.cor.df_final %>% 
+                                dplyr::filter(!obs_volume %in% 'has no volume') #%>% 
+                                #dplyr::filter(!Count < 10)
+
+output.cumulative.df_omit <- output.cumulative.df %>% 
+                                dplyr::filter(!obs_volume %in% 'has no volume') #%>% 
+                                #dplyr::filter(!Count < 10)
 
 delta_abs_figure <- ggplot(
-          (output.cumulative.df %>% dplyr::filter(!(Type == 'Sample' & Count == 0))),
+          (output.cumulative.df_omit %>% dplyr::filter(!(Type == 'Sample' & Count == 0))),
            aes(hours, delta_florescence, group = Well)) +
       # geom_point(aes(color = Type)) +
-      geom_smooth(aes(color = Type), method = "lm", se = FALSE)
+      geom_smooth(aes(color = Type), method = "lm", se = FALSE) +
+  facet_wrap(~Treatment,scales = "free")
 delta_abs_figure
 
 
-AUC_cor_by_count <- ggplot(output.cor.df, 
+AUC_cor_by_count <- ggplot(output.cor.df_final_omit, 
                 aes(x = Count, y = AUC_cor,  color = Family_EBV)) +
-  geom_point(fill = "steelblue")
+  geom_point(fill = "steelblue")+
+  facet_wrap(~Treatment,scales = "free")
 AUC_cor_by_count
 
 summary.df <- Rmisc::summarySE(
-                      data = output.cor.df,
-                      groupvars = 'Family',
+                      data = (output.cor.df %>% dplyr::filter(!AUC_cor > 3000)),
+                      groupvars = c('Family', 'Treatment'),
                       measurevar = 'AUC_cor_norm')
 
 summary.df <- summary.df %>% dplyr::mutate(Family_EBV = 
@@ -267,8 +387,9 @@ AUC_cor_by_count_fam <- ggplot(summary.df,
                 aes(x = as.factor(as.numeric(Family)), y = AUC_cor_norm, color = Family_EBV)) +
   geom_point(fill = "steelblue") +
   geom_errorbar(aes(ymin = AUC_cor_norm - se, ymax = AUC_cor_norm + se), width = 0.2) +
-  theme_classic()
-
+  theme_classic() +
+  facet_wrap(~Treatment,scales = "free")
+# ?facet_wrap
 ggarrange(delta_abs_figure,
           AUC_cor_by_count,
           AUC_cor_by_count_fam,
