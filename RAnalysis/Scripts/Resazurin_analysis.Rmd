@@ -45,11 +45,21 @@ resaz_72hpf_filenames
 # [19] "Data/20260320_72hpf/Resaz_plate2_low_T3_260320_1653.xlsx"    "Data/20260320_72hpf/Resaz_plate2_low_T4_260320_1754.xlsx" 
 
 
+resaz_15dpf_filenames <- list.files("Data/20260401_360hpf/", pattern = "\\.xlsx$", full.names = TRUE)
+resaz_15dpf_filenames
+
 # Read each file into a named list
-xlsx_list <- setNames(
+xlsx_list_72hpf <- setNames(
                       lapply(resaz_72hpf_filenames, read_excel),
                       str_remove(basename(resaz_72hpf_filenames), "\\.xlsx$")
              )
+
+
+xlsx_list_15dpf <- setNames(
+                      lapply(resaz_15dpf_filenames, read_excel),
+                      str_remove(basename(resaz_15dpf_filenames), "\\.xlsx$")
+             )
+
 
 ```
 
@@ -63,14 +73,74 @@ covert_to_df <- function (file_in) {
                                 cols = -Plate_row,
                                 names_to = "Plate_col",
                                 values_to = "flourescence"
-                              )
+                              ) %>% 
+                            # dplyr::mutate(filename = x.2) %>% 
+                            dplyr::mutate(timepoint = "T0", 
+                                          plate = "1", 
+                                          Well = paste0(Plate_row,Plate_col),
+                                          time= as.POSIXlt((strptime(1311, format = "%H%M")),
+                                                           format = "%H:%M")
+                                                                                                 
+                                          )
                           
                           return(file_out)
                         }
 
+covert_to_df_2 <- function (file_in) {
+                          file_out <- as.data.frame(file_in[-c(1:26), -c(1,15)]) # drop first columns and first 26 rows
+                          colnames(file_out) <- c("Plate_row", 1,2,3,4,5,6,7,8,9,10,11,12)
+                          
+                          x.hrmin <- as.numeric(gsub("^.*_(\\d+)\\.xlsx$", "\\1", x))
+                          file_out <- file_out %>%  
+                              tidyr::pivot_longer(
+                                cols = -Plate_row,
+                                names_to = "Plate_col",
+                                values_to = "flourescence"
+                              ) %>% 
+                            dplyr::mutate(filename = as.character(x.2)) %>% 
+                            dplyr::mutate(timepoint = gsub("^.*?(T\\d+).*$", "\\1", x.2), 
+                                          plate = gsub("^.*plate(\\d+).*", "\\1", x.2), 
+                                          Well = paste0(Plate_row,Plate_col),
+                                          time= as.POSIXlt((strptime(x.hrmin, format = "%H%M")),
+                                                           format = "%H:%M")
+                                                                                                 
+                                          )
+                          
+                          return(file_out)
+                        }
+
+loop.df           <- data.frame(matrix(nrow = 1, ncol = 8)) # create dataframe to save cumunalitively during for loop
+colnames(loop.df) <- c('filename', 'time', 'timepoint', 'Plate_row', 'Plate_col', 'Well', 'plate', 'flourescence') # names for columns in the for loop
+rbind.df          <- data.frame() # start dataframe 
+for (i in 1:length(resaz_15dpf_filenames)) {
+  
+ x         <- (basename(resaz_15dpf_filenames[i]))
+ x.2       <- sub("\\.xlsx$", "", noquote(x))
+ loop.df   <- covert_to_df_2(xlsx_list_15dpf[[x.2]])
+ 
+ rbind.df <- rbind(rbind.df,
+                     loop.df) #bind to a cumulative list dataframe
+ print(rbind.df) # print to monitor progress
+  
+}
+
+
+rbind.df <- rbind.df %>% 
+                    dplyr::mutate(Date = 20260401,
+                                  Treatment = dplyr::case_when(plate == 1 ~ "26C",
+                                                        plate == 2 ~ "30C",
+                                                        plate == 3 ~ "34C",
+                                                        plate == 4 ~ "38C"),
+                                  PlateID = dplyr::case_when(plate == 1 ~ "plate_1_26",
+                                                        plate == 2 ~ "plate_2_30",
+                                                        plate == 3 ~ "plate_3_34",
+                                                        plate == 4 ~ "plate_4_38"))
+
+all_data_merged <- dplyr::left_join(rbind.df,metadata_counts, by=c('Date','PlateID', 'Well', 'Plate_row', 'Treatment'))
+
 ```
 
-```{r}
+```{r 72hpf plate 1}
 plate1_high_T0_260320 <- covert_to_df(xlsx_list$Resaz_plate1_high_T0_260320_131142) %>% dplyr::mutate(timepoint = "T0", 
                                                                                                       plate = "1", 
                                                                                                       Well = paste0(Plate_row,Plate_col),
@@ -112,7 +182,7 @@ plate1_high_T4_260320 <- covert_to_df(xlsx_list$Resaz_plate1_high_T4_260320_1747
                                                                                                  )
 ```
 
-```{r}
+```{r 72 hpf plate 2}
 
 
 
@@ -278,8 +348,8 @@ plate1_high_master_merged
 ```{r auc calc function}
 
 output.df <- data.frame()
-loop.df_m   <- data.frame(unique(all_data_merged$PlateID))
-loop.df_i   <- data.frame(unique(all_data_merged$Well))
+loop.df_m   <- data.frame(unique(rbind.df$PlateID))
+loop.df_i   <- data.frame(unique(rbind.df$Well))
 
 
 # Call the cumulative dataframe that we will write to in the for loop below
@@ -323,9 +393,9 @@ for(i in 1:nrow(loop.df_i)){
    print(output.df) # print to monitor progress
    
    
-   mean.AUC.blanks <- mean(
-                          (output.df %>% dplyr::filter(Type %in% 'Blank' & !AUC > 5400))$AUC
-   )
+   # mean.AUC.blanks <- mean(
+   #                        (output.df %>% dplyr::filter(Type %in% 'Blank' & !AUC > 5400))$AUC
+   # )
   
    output.cor.df <- output.df %>% 
                             dplyr::filter(!Type %in% 'Blank') %>% 
@@ -375,7 +445,7 @@ AUC_cor_by_count <- ggplot(output.cor.df_final_omit,
 AUC_cor_by_count
 
 summary.df <- Rmisc::summarySE(
-                      data = (output.cor.df %>% dplyr::filter(!AUC_cor > 3000)),
+                      data = (output.cor.df),
                       groupvars = c('Family', 'Treatment'),
                       measurevar = 'AUC_cor_norm')
 
@@ -389,6 +459,17 @@ AUC_cor_by_count_fam <- ggplot(summary.df,
   geom_errorbar(aes(ymin = AUC_cor_norm - se, ymax = AUC_cor_norm + se), width = 0.2) +
   theme_classic() +
   facet_wrap(~Treatment,scales = "free")
+
+
+AUC_cor_by_count_fam <- ggplot(summary.df, 
+                aes(x = Treatment, y = AUC_cor_norm, group = as.factor(as.numeric(Family)), color = Family_EBV)) +
+  geom_point(fill = "steelblue") +
+  geom_smooth(method = "loess", se = TRUE) +
+  # geom_errorbar(aes(ymin = AUC_cor_norm - se, ymax = AUC_cor_norm + se), width = 0.2) +
+  theme_classic() + 
+  facet_wrap(~Family_EBV)
+
+
 # ?facet_wrap
 ggarrange(delta_abs_figure,
           AUC_cor_by_count,
