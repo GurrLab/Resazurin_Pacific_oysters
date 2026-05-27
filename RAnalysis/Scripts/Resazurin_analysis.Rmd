@@ -29,7 +29,7 @@ metadata_counts <- read.csv("Data/metadata_larvae_counts.csv", sep=',')
 plate_notes <- metadata_counts %>%  dplyr::select(c('PlateID','Well','Note','X')) %>% dplyr::rename(obs_volume = X)
 ```
 
-```{r}
+```{r call raw file folders}
 resaz_72hpf_filenames <- list.files("Data/20260320_72hpf/", pattern = "\\.xlsx$", full.names = TRUE)
 resaz_72hpf_filenames
 
@@ -48,6 +48,14 @@ resaz_72hpf_filenames
 resaz_15dpf_filenames <- list.files("Data/20260401_360hpf/", pattern = "\\.xlsx$", full.names = TRUE)
 resaz_15dpf_filenames
 
+
+resaz_48dpf_filenames <- list.files("Data/20260504/", pattern = "\\.xlsx$", full.names = TRUE)
+resaz_48dpf_filenames
+
+```
+
+
+```{r list files in each folder}
 # Read each file into a named list
 xlsx_list_72hpf <- setNames(
                       lapply(resaz_72hpf_filenames, read_excel),
@@ -60,7 +68,10 @@ xlsx_list_15dpf <- setNames(
                       str_remove(basename(resaz_15dpf_filenames), "\\.xlsx$")
              )
 
-
+xlsx_list_48dpf <- setNames(
+                      lapply(resaz_48dpf_filenames, read_excel),
+                      str_remove(basename(resaz_48dpf_filenames), "\\.xlsx$")
+             )
 ```
 
 ```{r}
@@ -109,6 +120,10 @@ covert_to_df_2 <- function (file_in) {
                           return(file_out)
                         }
 
+```
+
+
+```{r 15 dpf}
 loop.df           <- data.frame(matrix(nrow = 1, ncol = 8)) # create dataframe to save cumunalitively during for loop
 colnames(loop.df) <- c('filename', 'time', 'timepoint', 'Plate_row', 'Plate_col', 'Well', 'plate', 'flourescence') # names for columns in the for loop
 rbind.df          <- data.frame() # start dataframe 
@@ -125,7 +140,7 @@ for (i in 1:length(resaz_15dpf_filenames)) {
 }
 
 
-rbind.df <- rbind.df %>% 
+rbind.df_15dpf <- rbind.df %>% 
                     dplyr::mutate(Date = 20260401,
                                   Treatment = dplyr::case_when(plate == 1 ~ "26C",
                                                         plate == 2 ~ "30C",
@@ -135,10 +150,49 @@ rbind.df <- rbind.df %>%
                                                         plate == 2 ~ "plate_2_30",
                                                         plate == 3 ~ "plate_3_34",
                                                         plate == 4 ~ "plate_4_38"))
-
-all_data_merged <- dplyr::left_join(rbind.df,metadata_counts, by=c('Date','PlateID', 'Well', 'Plate_row', 'Treatment'))
+rbind.df_15dpf$time
+data_merged_15dpf <- dplyr::left_join(rbind.df_15dpf,metadata_counts, by=c('Date','PlateID', 'Well', 'Plate_row', 'Treatment'))
 
 ```
+
+
+```{r 48 dpf}
+loop.df           <- data.frame(matrix(nrow = 1, ncol = 8)) # create dataframe to save cumunalitively during for loop
+colnames(loop.df) <- c('filename', 'time', 'timepoint', 'Plate_row', 'Plate_col', 'Well', 'plate', 'flourescence') # names for columns in the for loop
+rbind.df          <- data.frame() # start dataframe 
+for (i in 1:length(resaz_48dpf_filenames)) {
+  
+ x         <- (basename(resaz_48dpf_filenames[i]))
+ x.2       <- sub("\\.xlsx$", "", noquote(x))
+ loop.df   <- covert_to_df_2(xlsx_list_48dpf[[x.2]])
+ 
+ rbind.df <- rbind(rbind.df,
+                     loop.df) #bind to a cumulative list dataframe
+ print(rbind.df) # print to monitor progress
+  
+}
+
+
+rbind.df_48dpf <- rbind.df %>% # note, the names of the files differ from the previous time;oint, so made adjustments here
+                    dplyr::mutate(Date = 20260504,
+                                  Treatment = dplyr::case_when(
+                                                        grepl("26C", plate, ignore.case = TRUE) ~ "26C", # I assumed plates 1-4 are in line with temp, checl with Anna
+                                                        grepl("30C", plate, ignore.case = TRUE) ~ "30C",
+                                                        grepl("34C", plate, ignore.case = TRUE) ~ "34C",
+                                                        grepl("38C", plate, ignore.case = TRUE) ~ "38C"),
+                                  PlateID = dplyr::case_when(
+                                                        grepl("26C", plate, ignore.case = TRUE) ~ "plate_1_26",
+                                                        grepl("30C", plate, ignore.case = TRUE) ~ "plate_2_30",
+                                                        grepl("34C", plate, ignore.case = TRUE) ~"plate_3_34",
+                                                        grepl("38C", plate, ignore.case = TRUE) ~ "plate_4_38"))
+
+
+rbind.df_48dpf$time
+
+data_merged_48dpf <- dplyr::left_join(rbind.df_48dpf,metadata_counts, by=c('Date','PlateID', 'Well', 'Plate_row', 'Treatment'))
+
+```
+
 
 ```{r 72hpf plate 1}
 plate1_high_T0_260320 <- covert_to_df(xlsx_list$Resaz_plate1_high_T0_260320_131142) %>% dplyr::mutate(timepoint = "T0", 
@@ -345,11 +399,15 @@ all_data_merged <- dplyr::left_join(all_data,metadata_counts, by=c('Date','Plate
 plate1_high_master_merged
 ```
 
-```{r auc calc function}
+
+Note: call specific df
+  * loop.df_m and loop.df_i = columns in **rbind.df_14dpf**
+  * plate_id == rows in **data_merged_14dpf** by common plate ID between **rbind.df_14dpf** 
+```{r 14 dpf auc calc function}
 
 output.df <- data.frame()
-loop.df_m   <- data.frame(unique(rbind.df$PlateID))
-loop.df_i   <- data.frame(unique(rbind.df$Well))
+loop.df_m   <- data.frame(unique(rbind.df_15dpf$PlateID)) # call specific df
+loop.df_i   <- data.frame(unique(rbind.df_15dpf$Well))  # call specific df
 
 
 # Call the cumulative dataframe that we will write to in the for loop below
@@ -360,7 +418,173 @@ running.df           <- data.frame(matrix(nrow = 1, ncol = 9)) # create datafram
 colnames(running.df) <- c('Date', 'Treatment', 'PlateID', 'Age', 'Well', 'Family', 'Type', 'Count', 'AUC') # names for columns in the for loop
 
 for(m in 1:nrow(loop.df_m)){
-  plate_id      <- all_data_merged %>% 
+  plate_id      <- data_merged_15dpf %>%   # call specific df
+                                dplyr::filter(PlateID %in% loop.df_m[m,1])
+for(i in 1:nrow(loop.df_i)){
+  well.over.time       <- plate_id %>% 
+                                dplyr::filter(Well %in% loop.df_i[i,1]) %>% 
+                                dplyr::arrange(time) %>% 
+                                dplyr::mutate(hours = as.numeric(difftime(time, 
+                                                                          time[1], 
+                                                                          units = "hours")),
+                                              delta_florescence = flourescence - flourescence[1],
+                                              AUC = pracma::trapz(
+                                                                  hours, 
+                                                                  flourescence)) %>% 
+                                dplyr::select('Date', 'Treatment', 'PlateID', 'Age', 'time', 'Family', 'hours',
+                                              'Well', 'Type', 'Count', 'AUC', 'delta_florescence')
+                      
+  output.cumulative.df <- rbind(output.cumulative.df, well.over.time)
+  
+  running.df$Date      <- well.over.time$Date[1]
+  running.df$Treatment <- well.over.time$Treatment[1]
+  running.df$PlateID   <- well.over.time$PlateID[1]
+  running.df$Age       <- well.over.time$Age[1]
+  running.df$Well      <- well.over.time$Well[1]
+  running.df$Family    <- well.over.time$Family[1]
+  running.df$Type      <- well.over.time$Type[1]
+  running.df$Count     <- well.over.time$Count[1]
+  running.df$AUC       <- well.over.time$AUC[1]
+  
+   output.df <- rbind(output.df,
+                     running.df) #bind to a cumulative list dataframe
+   print(output.df) # print to monitor progress
+   
+   
+   mean.AUC.blanks <- mean(
+                           (output.df %>% dplyr::filter(Type %in% 'Blank'))$AUC
+    )
+  
+   output.cor.df <- output.df %>% 
+                            dplyr::filter(!Type %in% 'Blank') %>% 
+                            dplyr::mutate(AUC_cor      = as.numeric(AUC-mean.AUC.blanks),
+                                          # AUC_cor_norm = AUC_cor/Count)
+                                          AUC_cor_norm = dplyr::case_when(
+                                                                          (AUC_cor < 0 | Count == 0) ~ NA,
+                                                                          (AUC_cor > 0 & Count > 0) ~ AUC_cor/Count)) %>% 
+                            na.omit()
+                      
+                           
+  }
+}
+
+output.cor.df_final <- merge(plate_notes, output.cor.df) %>% 
+                                                dplyr::mutate(Family_EBV = 
+                                                   dplyr::case_when(Family > 50 ~ 'Low',
+                                                              Family < 20 ~ 'High'))
+
+output.cumulative.df <- merge(plate_notes, output.cumulative.df) %>% dplyr::mutate(Family_EBV = 
+                                                   dplyr::case_when(Family > 50 ~ 'Low',
+                                                              Family < 20 ~ 'High'))
+
+
+
+output.cor.df_final_omit <- output.cor.df_final %>% 
+                                dplyr::filter(!obs_volume %in% 'has no volume') #%>% 
+                                #dplyr::filter(!Count < 10)
+
+output.cumulative.df_omit <- output.cumulative.df %>% 
+                                dplyr::filter(!obs_volume %in% 'has no volume') #%>% 
+                                #dplyr::filter(!Count < 10)
+
+delta_abs_figure <- ggplot(
+          (output.cumulative.df_omit %>% dplyr::filter(!(Type == 'Sample' & Count == 0))),
+           aes(hours, delta_florescence, group = Well)) +
+      # geom_point(aes(color = Type)) +
+      geom_smooth(aes(color = Type), method = "lm", se = FALSE) +
+  facet_wrap(~Treatment,scales = "free")
+delta_abs_figure
+
+
+AUC_cor_by_count <- ggplot(output.cor.df_final_omit, 
+                aes(x = Count, y = AUC_cor,  color = Family_EBV)) +
+  geom_point(fill = "steelblue")+
+  facet_wrap(~Treatment,scales = "free")
+AUC_cor_by_count
+
+summary.df <- Rmisc::summarySE(
+                      data = (output.cor.df),
+                      groupvars = c('Family', 'Treatment'),
+                      measurevar = 'AUC_cor_norm')
+
+summary.df <- summary.df %>% dplyr::mutate(Family_EBV = 
+                                                   dplyr::case_when(Family > 50 ~ 'Low',
+                                                              Family < 20 ~ 'High'))
+
+AUC_cor_by_count_fam <- ggplot(summary.df, 
+                aes(x = as.factor(as.numeric(Family)), y = AUC_cor_norm, color = Family_EBV)) +
+  geom_point(fill = "steelblue") +
+  geom_errorbar(aes(ymin = AUC_cor_norm - se, ymax = AUC_cor_norm + se), width = 0.2) +
+  theme_classic() +
+  facet_wrap(~Treatment,scales = "free")
+
+
+AUC_cor_by_count_fam <- ggplot(summary.df, 
+                aes(x = Treatment, y = AUC_cor_norm, group = as.factor(as.numeric(Family)), color = Family_EBV)) +
+  geom_point(fill = "steelblue") +
+  geom_smooth(method = "loess", se = TRUE) +
+  # geom_errorbar(aes(ymin = AUC_cor_norm - se, ymax = AUC_cor_norm + se), width = 0.2) +
+  theme_classic() + 
+  facet_wrap(~Family_EBV)
+
+
+AUC_cor_by_count_fam2 <- ggplot(summary.df, 
+                aes(x = Treatment, y = AUC_cor_norm, group = Family_EBV, color = Family_EBV)) +
+  geom_point(fill = "steelblue") +
+  geom_smooth(method = "loess",               # Apply LOESS smoothing
+              se = TRUE,                      # Show 95% CI (grey ribbon)
+              level = 0.95,
+              span = 0.8)  +
+  theme_classic() + 
+  facet_wrap(~Family_EBV)
+
+
+
+# ?facet_wrap
+ggarrange(delta_abs_figure,
+          AUC_cor_by_count,
+          AUC_cor_by_count_fam,
+          AUC_cor_by_count_fam2,
+          nrow=2,
+          ncol=2)
+
+ggarrange(
+          AUC_cor_by_count_fam,
+          AUC_cor_by_count_fam2,
+          nrow=2,
+          ncol=1)
+
+pdf("Output/20260401_resazurin.pdf", height = 6, width = 6)
+ggarrange(
+          AUC_cor_by_count_fam,
+          AUC_cor_by_count_fam2,
+          nrow=2,
+          ncol=1)
+dev.off()
+
+```
+
+
+
+Note: call specific df
+  * loop.df_m and loop.df_i = columns in **rbind.df_48dpf**
+  * plate_id == rows in **data_merged_48dpf** by common plate ID between **rbind.df_48dpf** 
+```{r 48 dpf auc calc function}
+
+output.df <- data.frame()
+loop.df_m   <- data.frame(unique(rbind.df_48dpf$PlateID))  # call specific df
+loop.df_i   <- data.frame(unique(rbind.df_48dpf$Well))  # call specific df
+
+
+# Call the cumulative dataframe that we will write to in the for loop below
+output.cumulative.df <- data.frame() # start dataframe 
+output.df            <- data.frame() # start dataframe 
+output.cor.df        <- data.frame() # start dataframe 
+running.df           <- data.frame(matrix(nrow = 1, ncol = 9)) # create dataframe to save cumunalitively during for loop
+colnames(running.df) <- c('Date', 'Treatment', 'PlateID', 'Age', 'Well', 'Family', 'Type', 'Count', 'AUC') # names for columns in the for loop
+
+for(m in 1:nrow(loop.df_m)){
+  plate_id      <- data_merged_48dpf %>%   # call specific df
                                 dplyr::filter(PlateID %in% loop.df_m[m,1])
 for(i in 1:nrow(loop.df_i)){
   well.over.time       <- plate_id %>% 
