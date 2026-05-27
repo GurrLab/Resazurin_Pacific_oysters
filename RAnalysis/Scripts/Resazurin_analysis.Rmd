@@ -24,7 +24,7 @@ library(ggpubr)
 ```{r}
 
 metadata_counts <- read.csv("Data/metadata_larvae_counts.csv", sep=',')
-View(metadata_counts)
+# View(metadata_counts)
 
 plate_notes <- metadata_counts %>%  dplyr::select(c('PlateID','Well','Note','X')) %>% dplyr::rename(obs_volume = X)
 ```
@@ -393,9 +393,9 @@ for(i in 1:nrow(loop.df_i)){
    print(output.df) # print to monitor progress
    
    
-   # mean.AUC.blanks <- mean(
-   #                        (output.df %>% dplyr::filter(Type %in% 'Blank' & !AUC > 5400))$AUC
-   # )
+   mean.AUC.blanks <- mean(
+                           (output.df %>% dplyr::filter(Type %in% 'Blank'))$AUC
+    )
   
    output.cor.df <- output.df %>% 
                             dplyr::filter(!Type %in% 'Blank') %>% 
@@ -470,12 +470,39 @@ AUC_cor_by_count_fam <- ggplot(summary.df,
   facet_wrap(~Family_EBV)
 
 
+AUC_cor_by_count_fam2 <- ggplot(summary.df, 
+                aes(x = Treatment, y = AUC_cor_norm, group = Family_EBV, color = Family_EBV)) +
+  geom_point(fill = "steelblue") +
+  geom_smooth(method = "loess",               # Apply LOESS smoothing
+              se = TRUE,                      # Show 95% CI (grey ribbon)
+              level = 0.95,
+              span = 0.8)  +
+  theme_classic() + 
+  facet_wrap(~Family_EBV)
+
+
+
 # ?facet_wrap
 ggarrange(delta_abs_figure,
           AUC_cor_by_count,
           AUC_cor_by_count_fam,
-          nrow=3,
+          AUC_cor_by_count_fam2,
+          nrow=2,
+          ncol=2)
+
+ggarrange(
+          AUC_cor_by_count_fam,
+          AUC_cor_by_count_fam2,
+          nrow=2,
           ncol=1)
+
+pdf("Output/20260401_resazurin.pdf", height = 6, width = 6)
+ggarrange(
+          AUC_cor_by_count_fam,
+          AUC_cor_by_count_fam2,
+          nrow=2,
+          ncol=1)
+dev.off()
 
 ```
 
